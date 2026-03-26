@@ -1,0 +1,1216 @@
+<!-- Copyright © 2026 Northwind Pulse™. All rights reserved. -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign ROI - Maple &amp; Co.</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Flash prevention ──────────────────────────────────────────── */
+    html { background: #000; }
+    html[data-theme="light"] { background: #f0f4ff; }
+
+    /* ── Design tokens ─────────────────────────────────────────────── */
+    :root {
+      --bg:       #080e1c;
+      --surface:  rgba(255,255,255,.055);
+      --surface2: rgba(255,255,255,.03);
+      --border:   rgba(255,255,255,.08);
+      --text:     #e7ecff;
+      --muted:    #a7b1d6;
+      --primary:  #5a9fc2;
+      --primary2: #3d7fa0;
+      --accent:   #8b5cf6;
+      --good:     #10b981;
+      --warn:     #f59e0b;
+      --bad:      #ef4444;
+    }
+    [data-theme="light"] {
+      --bg:       #f0f4ff;
+      --surface:  rgba(255,255,255,.92);
+      --surface2: rgba(255,255,255,.75);
+      --border:   rgba(0,0,0,.09);
+      --text:     #1a2142;
+      --muted:    #5c6690;
+      --primary:  #1a7aaa;
+      --primary2: #0f5a80;
+      --accent:   #7c3aed;
+      --good:     #059669;
+      --warn:     #d97706;
+      --bad:      #dc2626;
+    }
+
+    /* ── Colour schemes ─────────────────────────────────────────────── */
+    html.scheme-creator { --primary:#a855f7; --primary2:#7c3aed; --accent:#06b6d4; --warn:#f59e0b; }
+    html.scheme-slate   { --primary:#78909c; --primary2:#546e7a; --accent:#90a4ae; --warn:#fb923c; }
+    html.scheme-ocean   { --primary:#0ea5e9; --primary2:#0284c7; --accent:#22d3ee; --warn:#f97316; }
+    html.scheme-sunset  { --primary:#f97316; --primary2:#ea580c; --accent:#ec4899; --warn:#8b5cf6; }
+    html.scheme-forest  { --primary:#10b981; --primary2:#059669; --accent:#34d399; --warn:#fde047; }
+    html.scheme-rose    { --primary:#e879f9; --primary2:#d946ef; --accent:#a855f7; --warn:#06b6d4; }
+    html.scheme-creator[data-theme="light"] { --primary:#7c3aed; --primary2:#6d28d9; --accent:#0284c7; }
+    html.scheme-slate[data-theme="light"]   { --primary:#546e7a; --primary2:#37474f; --accent:#607d8b; }
+    html.scheme-ocean[data-theme="light"]   { --primary:#0284c7; --primary2:#0369a1; --accent:#0ea5e9; }
+    html.scheme-sunset[data-theme="light"]  { --primary:#ea580c; --primary2:#c2410c; --accent:#db2777; }
+    html.scheme-forest[data-theme="light"]  { --primary:#059669; --primary2:#047857; --accent:#10b981; }
+    html.scheme-rose[data-theme="light"]    { --primary:#d946ef; --primary2:#a21caf; --accent:#9333ea; }
+
+    /* ── Scheme pills ───────────────────────────────────────────────── */
+    .scheme-pills { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+    .scheme-pill {
+      display:flex; align-items:center; gap:6px;
+      background:transparent; border:1.5px solid var(--border);
+      border-radius:100px; padding:5px 12px;
+      font-size:12px; font-weight:600; color:var(--muted);
+      cursor:pointer; transition:border-color .18s, color .18s, background .18s;
+      white-space:nowrap;
+    }
+    .scheme-pill:hover { border-color:var(--primary); color:var(--text); }
+    .scheme-pill.active { background:rgba(255,255,255,.07); border-color:var(--primary); color:var(--text); }
+    [data-theme="light"] .scheme-pill.active { background:rgba(0,0,0,.05); }
+    .scheme-swatch { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+
+    /* ── Base ───────────────────────────────────────────────────────── */
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(90,159,194,.18), transparent 60%),
+        radial-gradient(900px  600px at 85% 5%, rgba(139,92,246,.12), transparent 55%),
+        var(--bg);
+      color:var(--text); min-height:100vh;
+    }
+    [data-theme="light"] body {
+      background:
+        radial-gradient(1200px 700px at 15% 0%, rgba(26,122,170,.10), transparent 60%),
+        radial-gradient(900px  600px at 85% 5%, rgba(124,58,237,.07), transparent 55%),
+        var(--bg);
+    }
+
+    /* ── Topbar ─────────────────────────────────────────────────────── */
+    .topbar {
+      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+      padding:13px 24px; border-bottom:1px solid var(--border);
+      background:rgba(8,14,28,.22); backdrop-filter:blur(14px);
+      position:sticky; top:0; z-index:100;
+    }
+    [data-theme="light"] .topbar { background:rgba(240,244,255,.88); border-bottom-color:rgba(0,0,0,.08); }
+    .brand { display:flex; align-items:center; gap:10px; }
+    .brand-dot {
+      width:32px; height:32px; border-radius:50%; flex-shrink:0;
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; line-height:1;
+    }
+    .brand-title    { font-size:15px; font-weight:700; color:var(--text); line-height:1.15; }
+    .brand-subtitle { font-size:11px; color:var(--muted); margin-top:1px; }
+    .topbar-right   { margin-left:auto; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+
+    /* ── Theme toggle ───────────────────────────────────────────────── */
+    .theme-toggle { display:flex; align-items:center; gap:6px; cursor:pointer; }
+    .toggle-track {
+      width:34px; height:18px; background:var(--surface);
+      border:1px solid var(--border); border-radius:100px;
+      position:relative; transition:background .2s;
+    }
+    .toggle-thumb {
+      position:absolute; top:2px; left:2px;
+      width:12px; height:12px; border-radius:50%;
+      background:var(--primary); transition:transform .2s, background .2s;
+    }
+    [data-theme="light"] .toggle-thumb { transform:translateX(16px); }
+
+    /* ── Layout ─────────────────────────────────────────────────────── */
+    .container { max-width:1440px; margin:0 auto; padding:24px 20px; }
+    .section-label {
+      font-size:10px; font-weight:700; letter-spacing:.8px;
+      text-transform:uppercase; color:var(--muted); margin:22px 0 10px;
+    }
+    .section-label:first-child { margin-top:0; }
+    .card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:16px; padding:20px;
+    }
+    .card-title    { font-size:13px; font-weight:700; color:var(--text); margin-bottom:2px; }
+    .card-subtitle { font-size:11px; color:var(--muted); margin-bottom:2px; }
+
+    /* ── Error / Loading ─────────────────────────────────────────────── */
+    #error-msg {
+      display:none; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+      color:#fca5a5; padding:16px 20px; border-radius:12px; font-size:13px;
+      margin:20px 0;
+    }
+    #dashboard { display:none; }
+    .skel {
+      background:linear-gradient(90deg, var(--surface) 25%, rgba(255,255,255,.09) 50%, var(--surface) 75%);
+      background-size:400% 100%; animation:shimmer 1.4s ease infinite; border-radius:8px;
+    }
+    [data-theme="light"] .skel {
+      background:linear-gradient(90deg, rgba(0,0,0,.06) 25%, rgba(0,0,0,.03) 50%, rgba(0,0,0,.06) 75%);
+      background-size:400% 100%; animation:shimmer 1.4s ease infinite;
+    }
+    @keyframes shimmer { 0%{background-position:100% 50%} 100%{background-position:-100% 50%} }
+    .skel-pill {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:14px; padding:18px 16px; display:flex; flex-direction:column; gap:8px;
+    }
+
+    /* ── Filters ────────────────────────────────────────────────────── */
+    .filters-grid { display:grid; grid-template-columns:repeat(4,1fr) auto; gap:10px; align-items:flex-end; }
+    @media(max-width:860px) { .filters-grid { grid-template-columns:1fr 1fr; } }
+    @media(max-width:480px) { .filters-grid { grid-template-columns:1fr; } }
+    .field { display:flex; flex-direction:column; gap:4px; }
+    .field label {
+      font-size:10px; font-weight:700; letter-spacing:.5px;
+      text-transform:uppercase; color:var(--muted);
+    }
+    select {
+      background:rgba(14,22,52,.92); color:var(--text);
+      border:1px solid var(--border); border-radius:8px;
+      padding:8px 10px; font-size:13px; color-scheme:dark;
+      cursor:pointer; transition:border-color .15s; width:100%;
+    }
+    select:hover, select:focus { border-color:var(--primary); outline:none; }
+    [data-theme="light"] select { background:#ffffff; color:#1a2142; color-scheme:light; }
+    .reset-btn {
+      background:transparent; border:1px solid var(--border);
+      color:var(--muted); border-radius:8px; padding:8px 16px;
+      font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;
+      transition:border-color .15s, color .15s; align-self:flex-end;
+    }
+    .reset-btn:hover { border-color:var(--primary); color:var(--text); }
+
+    /* ── KPI row ─────────────────────────────────────────────────────── */
+    .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    @media(max-width:900px) { .kpi-row { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:480px) { .kpi-row { grid-template-columns:1fr 1fr; } }
+    .kpi-card {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:14px; padding:18px 16px; position:relative; overflow:hidden;
+    }
+    .kpi-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:linear-gradient(90deg, var(--primary), var(--accent));
+      opacity:0;
+    }
+    .kpi-card.highlight::before { opacity:1; }
+    .kpi-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .kpi-value { font-size:24px; font-weight:800; color:var(--primary); line-height:1; }
+    .kpi-delta { font-size:11px; color:var(--muted); margin-top:5px; display:flex; align-items:center; gap:4px; }
+    .delta-up   { color:var(--good); }
+    .delta-down { color:var(--bad); }
+    .delta-flat { color:var(--muted); }
+
+    /* ── Chart row ───────────────────────────────────────────────────── */
+    .chart-row { display:grid; grid-template-columns:40% 30% 30%; gap:14px; }
+    @media(max-width:1100px) { .chart-row { grid-template-columns:1fr 1fr; } }
+    @media(max-width:700px)  { .chart-row { grid-template-columns:1fr; } }
+    .chart-wrap { position:relative; height:260px; margin-top:14px; }
+    .chart-wrap-sm { position:relative; height:240px; margin-top:14px; }
+
+    /* ── Campaign table ──────────────────────────────────────────────── */
+    .table-wrap { overflow-x:auto; margin-top:14px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead th {
+      font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+      color:var(--muted); padding:8px 12px; text-align:left;
+      border-bottom:1px solid var(--border); white-space:nowrap; cursor:pointer;
+      user-select:none;
+    }
+    thead th:hover { color:var(--text); }
+    thead th .sort-icon { margin-left:4px; opacity:.4; font-size:10px; }
+    thead th.sort-asc .sort-icon, thead th.sort-desc .sort-icon { opacity:1; color:var(--primary); }
+    tbody tr { border-bottom:1px solid var(--border); transition:background .12s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:rgba(255,255,255,.04); }
+    [data-theme="light"] tbody tr:hover { background:rgba(0,0,0,.03); }
+    tbody td { padding:10px 12px; color:var(--text); white-space:nowrap; }
+    .td-muted { color:var(--muted); font-size:12px; }
+    .td-right { text-align:right; }
+    .type-badge {
+      display:inline-block; font-size:10px; font-weight:700; letter-spacing:.3px;
+      padding:2px 8px; border-radius:99px;
+    }
+    .type-paid    { background:rgba(139,92,246,.18); color:var(--accent); border:1px solid rgba(139,92,246,.25); }
+    .type-organic { background:rgba(255,255,255,.06); color:var(--muted); border:1px solid var(--border); }
+    .roas-good    { color:var(--good); font-weight:700; }
+    .roas-warn    { color:var(--warn); font-weight:700; }
+    .roas-bad     { color:var(--bad);  font-weight:700; }
+    .roas-na      { color:var(--muted); font-style:italic; }
+    .platform-icon-sm { font-size:14px; margin-right:4px; vertical-align:middle; }
+
+    /* ── Goals panel ─────────────────────────────────────────────────── */
+    .goals-toggle {
+      display:flex; align-items:center; gap:8px; cursor:pointer;
+      font-size:13px; font-weight:600; color:var(--muted); user-select:none;
+    }
+    .goals-toggle:hover { color:var(--text); }
+    .goals-arrow { font-size:10px; transition:transform .2s; display:inline-block; }
+    .goals-arrow.open { transform:rotate(90deg); }
+    .goals-body {
+      display:none; margin-top:16px; padding-top:16px;
+      border-top:1px solid var(--border);
+    }
+    .goals-body.open { display:block; }
+    .goals-inputs { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+    @media(max-width:700px) { .goals-inputs { grid-template-columns:1fr; } }
+    .goals-field label {
+      display:block; font-size:10px; font-weight:700; letter-spacing:.5px;
+      text-transform:uppercase; color:var(--muted); margin-bottom:5px;
+    }
+    .goals-field input[type="number"] {
+      width:100%; padding:8px 10px; border-radius:10px;
+      border:1px solid var(--border);
+      background:rgba(0,0,0,.22); color:var(--text);
+      font-size:13px; outline:none; transition:border-color .15s;
+    }
+    .goals-field input[type="number"]:focus { border-color:var(--primary); }
+    [data-theme="light"] .goals-field input[type="number"] { background:rgba(255,255,255,.88); }
+    .goals-progress { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    @media(max-width:700px) { .goals-progress { grid-template-columns:1fr; } }
+    .goal-bar-card {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:12px; padding:14px;
+    }
+    .goal-bar-label { font-size:11px; font-weight:700; color:var(--muted); margin-bottom:8px; }
+    .goal-bar-vals {
+      display:flex; justify-content:space-between; align-items:baseline;
+      margin-bottom:6px;
+    }
+    .goal-bar-actual { font-size:18px; font-weight:800; color:var(--primary); }
+    .goal-bar-target { font-size:11px; color:var(--muted); }
+    .bar-track { height:5px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+    [data-theme="light"] .bar-track { background:rgba(0,0,0,.08); }
+    .bar-fill { height:100%; border-radius:99px; background:var(--primary); transition:width .4s ease; }
+    .bar-fill.over { background:var(--good); }
+    .pace-badge {
+      display:inline-block; font-size:10px; font-weight:700; letter-spacing:.4px;
+      padding:2px 8px; border-radius:99px; margin-top:7px;
+    }
+    .pace-ahead    { background:rgba(16,185,129,.18);  color:var(--good); }
+    .pace-on-track { background:rgba(90,159,194,.18);  color:var(--primary); }
+    .pace-watch    { background:rgba(245,158,11,.18);  color:var(--warn); }
+    .pace-behind   { background:rgba(239,68,68,.18);   color:var(--bad); }
+
+    /* ── Misc ────────────────────────────────────────────────────────── */
+    .no-data { text-align:center; color:var(--muted); font-size:13px; padding:40px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ── Topbar ────────────────────────────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-dot">📊</div>
+    <div>
+      <div class="brand-title">Campaign ROI</div>
+      <div class="brand-subtitle">Maple &amp; Co.</div>
+    </div>
+  </div>
+  <div class="scheme-pills">
+    <button class="scheme-pill active" data-scheme="creator" onclick="setScheme('creator',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#a855f7,#06b6d4)"></span>Creator
+    </button>
+    <button class="scheme-pill" data-scheme="slate" onclick="setScheme('slate',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#94a3b8,#64748b)"></span>Slate
+    </button>
+    <button class="scheme-pill" data-scheme="ocean" onclick="setScheme('ocean',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#0ea5e9,#22d3ee)"></span>Ocean
+    </button>
+    <button class="scheme-pill" data-scheme="sunset" onclick="setScheme('sunset',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#f97316,#ec4899)"></span>Sunset
+    </button>
+    <button class="scheme-pill" data-scheme="forest" onclick="setScheme('forest',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#10b981,#34d399)"></span>Forest
+    </button>
+    <button class="scheme-pill" data-scheme="rose" onclick="setScheme('rose',this)">
+      <span class="scheme-swatch" style="background:linear-gradient(135deg,#e879f9,#a855f7)"></span>Rose
+    </button>
+  </div>
+  <div class="topbar-right">
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark">
+      <span>🌙</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span>☀️</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Error / Loading ───────────────────────────────────────────────────────── -->
+<div class="container"><div id="error-msg"></div></div>
+
+<div id="loading">
+  <div class="container">
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr) auto;gap:10px">
+        <div class="skel" style="height:38px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;border-radius:8px"></div>
+        <div class="skel" style="height:38px;width:80px;border-radius:8px"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+      <div class="skel-pill"><div class="skel" style="height:11px;width:70px"></div><div class="skel" style="height:28px;width:100px"></div><div class="skel" style="height:11px;width:80px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:11px;width:70px"></div><div class="skel" style="height:28px;width:100px"></div><div class="skel" style="height:11px;width:80px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:11px;width:70px"></div><div class="skel" style="height:28px;width:100px"></div><div class="skel" style="height:11px;width:80px"></div></div>
+      <div class="skel-pill"><div class="skel" style="height:11px;width:70px"></div><div class="skel" style="height:28px;width:100px"></div><div class="skel" style="height:11px;width:80px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:40% 30% 30%;gap:14px;margin-bottom:14px">
+      <div class="card"><div class="skel" style="height:260px"></div></div>
+      <div class="card"><div class="skel" style="height:260px"></div></div>
+      <div class="card"><div class="skel" style="height:260px"></div></div>
+    </div>
+    <div class="card"><div class="skel" style="height:220px"></div></div>
+  </div>
+</div>
+
+<!-- ── Dashboard ─────────────────────────────────────────────────────────────── -->
+<div id="dashboard">
+  <div class="container">
+
+    <!-- Filters -->
+    <div class="section-label">Filters</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="filters-grid">
+        <div class="field">
+          <label>Year</label>
+          <select id="f-year" onchange="applyFilters()"><option value="">All Years</option></select>
+        </div>
+        <div class="field">
+          <label>Month</label>
+          <select id="f-month" onchange="applyFilters()"><option value="">All Months</option></select>
+        </div>
+        <div class="field">
+          <label>Platform</label>
+          <select id="f-platform" onchange="applyFilters()"><option value="">All Platforms</option></select>
+        </div>
+        <div class="field">
+          <label>Campaign Type</label>
+          <select id="f-type" onchange="applyFilters()"><option value="">All Types</option></select>
+        </div>
+        <button class="reset-btn" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="section-label">Performance Summary</div>
+    <div class="kpi-row" style="margin-bottom:14px">
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Ad Spend</div>
+        <div class="kpi-value" id="kpi-spend">-</div>
+        <div class="kpi-delta" id="kpi-spend-delta"></div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Attributed Revenue</div>
+        <div class="kpi-value" id="kpi-revenue">-</div>
+        <div class="kpi-delta" id="kpi-revenue-delta"></div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Overall ROAS (Paid)</div>
+        <div class="kpi-value" id="kpi-roas">-</div>
+        <div class="kpi-delta" id="kpi-roas-delta"></div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Total Conversions</div>
+        <div class="kpi-value" id="kpi-conv">-</div>
+        <div class="kpi-delta" id="kpi-conv-delta"></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="section-label">Channel Analytics</div>
+    <div class="chart-row" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">Revenue vs Spend</div>
+        <div class="card-subtitle">Monthly comparison - attributed revenue and paid spend</div>
+        <div class="chart-wrap"><canvas id="chart-rev-spend"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">ROAS by Platform</div>
+        <div class="card-subtitle">Paid campaigns only - sorted by ROAS</div>
+        <div class="chart-wrap"><canvas id="chart-roas-platform"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Spend Allocation</div>
+        <div class="card-subtitle">Paid spend distribution by platform</div>
+        <div class="chart-wrap-sm" style="display:flex;align-items:center;justify-content:center"><canvas id="chart-spend-donut" style="max-height:220px;max-width:220px"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Campaign Table -->
+    <div class="section-label">Campaign Breakdown</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="table-wrap">
+        <table id="campaign-table">
+          <thead>
+            <tr>
+              <th onclick="sortTable('campaignName')" data-col="campaignName">Campaign <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('platform')" data-col="platform">Platform <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('campaignType')" data-col="campaignType">Type <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('spend')" data-col="spend" class="td-right">Spend <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('revenue')" data-col="revenue" class="td-right sort-desc">Revenue <span class="sort-icon">&#8595;</span></th>
+              <th onclick="sortTable('roas')" data-col="roas" class="td-right">ROAS <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('conversions')" data-col="conversions" class="td-right">Conversions <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('cpa')" data-col="cpa" class="td-right">CPA <span class="sort-icon">&#8597;</span></th>
+              <th onclick="sortTable('ctr')" data-col="ctr" class="td-right">CTR <span class="sort-icon">&#8597;</span></th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div class="no-data" id="table-empty" style="display:none">No data for the selected filters.</div>
+      </div>
+    </div>
+
+    <!-- Goals & Targets -->
+    <div class="section-label">Goals &amp; Targets</div>
+    <div class="card">
+      <div class="goals-toggle" onclick="toggleGoals()">
+        <span class="goals-arrow" id="goals-arrow">&#9654;</span>
+        <span>Monthly Goals &amp; Budget Tracking</span>
+      </div>
+      <div class="goals-body" id="goals-body">
+        <div class="goals-inputs">
+          <div class="goals-field">
+            <label>Monthly Spend Budget ($)</label>
+            <input type="number" id="g-spend-target" min="0" step="50" value="1500" oninput="saveTargets();renderGoals()">
+          </div>
+          <div class="goals-field">
+            <label>Monthly Revenue Target ($)</label>
+            <input type="number" id="g-rev-target" min="0" step="100" value="8000" oninput="saveTargets();renderGoals()">
+          </div>
+          <div class="goals-field">
+            <label>ROAS Target</label>
+            <input type="number" id="g-roas-target" min="0" step="0.1" value="3.0" oninput="saveTargets();renderGoals()">
+          </div>
+        </div>
+        <div class="goals-progress">
+          <div class="goal-bar-card" id="goal-spend-card">
+            <div class="goal-bar-label">Spend vs Budget</div>
+            <div class="goal-bar-vals">
+              <span class="goal-bar-actual" id="goal-spend-actual">-</span>
+              <span class="goal-bar-target" id="goal-spend-tgt">of $1,500</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="goal-spend-bar" style="width:0%"></div></div>
+            <div class="pace-badge" id="goal-spend-badge">-</div>
+          </div>
+          <div class="goal-bar-card" id="goal-rev-card">
+            <div class="goal-bar-label">Revenue vs Target</div>
+            <div class="goal-bar-vals">
+              <span class="goal-bar-actual" id="goal-rev-actual">-</span>
+              <span class="goal-bar-target" id="goal-rev-tgt">of $8,000</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="goal-rev-bar" style="width:0%"></div></div>
+            <div class="pace-badge" id="goal-rev-badge">-</div>
+          </div>
+          <div class="goal-bar-card" id="goal-roas-card">
+            <div class="goal-bar-label">ROAS vs Target</div>
+            <div class="goal-bar-vals">
+              <span class="goal-bar-actual" id="goal-roas-actual">-</span>
+              <span class="goal-bar-target" id="goal-roas-tgt">target 3.0x</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="goal-roas-bar" style="width:0%"></div></div>
+            <div class="pace-badge" id="goal-roas-badge">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /dashboard -->
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const WORKER    = 'https://northwind-data-worker.northwindconsultinginc.workers.dev';
+const CLIENT_ID = 'demo'; // swap to client's ID for live deployments
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allRows   = [];
+let filterOpts = {};
+let sortCol   = localStorage.getItem('roi-sort-col') || 'revenue';
+let sortDir   = localStorage.getItem('roi-sort-dir') || 'desc';
+let chartRevSpend, chartRoasPlatform, chartSpendDonut;
+
+const PLATFORM_ICONS = {
+  instagram: '📸',
+  tiktok:    '🎵',
+  google:    '🔍',
+  pinterest: '📌',
+  email:     '✉️',
+};
+
+const PLATFORM_COLORS = {
+  instagram: '#e1306c',
+  tiktok:    '#69c9d0',
+  google:    '#4285f4',
+  pinterest: '#e60023',
+  email:     '#10b981',
+};
+
+// ── Theme & Scheme ────────────────────────────────────────────────────────────
+let theme  = localStorage.getItem('roi-theme')  || 'dark';
+let scheme = localStorage.getItem('roi-scheme') || 'creator';
+
+function applyTheme(t) {
+  theme = t;
+  document.documentElement.dataset.theme = (t === 'light') ? 'light' : '';
+  localStorage.setItem('roi-theme', t);
+  window.parent.postMessage({ type: 'nwp-sidebar-theme', mode: t }, '*');
+  refreshChartColors();
+}
+
+function toggleTheme() {
+  applyTheme(theme === 'dark' ? 'light' : 'dark');
+}
+
+function setScheme(s, el) {
+  scheme = s;
+  document.querySelectorAll('.scheme-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.documentElement.className = 'scheme-' + s;
+  if (theme === 'light') document.documentElement.dataset.theme = 'light';
+  localStorage.setItem('roi-scheme', s);
+  refreshChartColors();
+}
+
+window.addEventListener('message', e => {
+  if (e.data?.type === 'nwp-theme') applyTheme(e.data.mode);
+});
+
+// ── Init theme on load ────────────────────────────────────────────────────────
+(function initTheme() {
+  document.documentElement.className = 'scheme-' + scheme;
+  if (theme === 'light') document.documentElement.dataset.theme = 'light';
+  document.querySelectorAll('.scheme-pill').forEach(p => {
+    if (p.dataset.scheme === scheme) p.classList.add('active');
+    else p.classList.remove('active');
+  });
+})();
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtDollar(n) {
+  if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'k';
+  return '$' + n.toFixed(0);
+}
+function fmtDollarFull(n) {
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits:0, maximumFractionDigits:0 });
+}
+function fmtPct(n) { return n.toFixed(1) + '%'; }
+function fmtRoas(n) { return n.toFixed(1) + 'x'; }
+function fmtNum(n)  { return n.toLocaleString('en-US'); }
+function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function getDelta(curr, prev) {
+  if (!prev) return null;
+  return ((curr - prev) / prev) * 100;
+}
+
+function renderDelta(el, pct, invertGood) {
+  if (pct === null) { el.innerHTML = '<span class="delta-flat">-</span>'; return; }
+  const up   = pct >= 0;
+  const good = invertGood ? !up : up;
+  const cls  = good ? 'delta-up' : 'delta-down';
+  const arrow = up ? '&#9650;' : '&#9660;';
+  el.innerHTML = `<span class="${cls}">${arrow} ${Math.abs(pct).toFixed(1)}% vs prior period</span>`;
+}
+
+// ── Fetch data ─────────────────────────────────────────────────────────────────
+const MONTH_LABELS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseRow(r) {
+  // Parse date safely - append T00:00:00 to avoid UTC offset shifting the date
+  const d    = new Date(r.campaign_date + 'T00:00:00');
+  const yr   = String(d.getFullYear());
+  const moNum = d.getMonth(); // 0-based
+  const mo   = String(moNum + 1).padStart(2, '0');
+  const mKey = yr + '-' + mo;
+  const mLabel = MONTH_LABELS[moNum] + ' ' + yr;
+
+  // Computed metrics
+  const spend       = Number(r.spend)       || 0;
+  const revenue     = Number(r.revenue)     || 0;
+  const impressions = Number(r.impressions) || 0;
+  const clicks      = Number(r.clicks)      || 0;
+  const conversions = Number(r.conversions) || 0;
+
+  const roas = spend > 0 ? revenue / spend : null;
+  const ctr  = impressions > 0 ? (clicks / impressions) * 100 : 0;
+  const cpa  = spend > 0 && conversions > 0 ? spend / conversions : null;
+  const cvr  = clicks > 0 ? (conversions / clicks) * 100 : 0;
+
+  return {
+    // Normalised field names used throughout the dashboard
+    campaignId:   r.campaign_id,
+    campaignName: r.campaign_name,
+    campaignType: r.campaign_type,
+    platform:     r.platform,
+    // Date helpers
+    yr, mo, mKey, mLabel,
+    // Raw metrics
+    impressions, clicks, spend, conversions, revenue,
+    // Computed
+    roas, ctr, cpa, cvr,
+  };
+}
+
+function buildFilterOpts(rows) {
+  const years     = [...new Set(rows.map(r => r.yr))].sort();
+  const monthKeys = [...new Set(rows.map(r => r.mKey))].sort();
+  const months    = monthKeys.map(k => {
+    const row = rows.find(r => r.mKey === k);
+    return { value: row.mo, label: row.mLabel };
+  });
+  // Deduplicate months by value (same month across years share the same mo value)
+  const seenMo = new Set();
+  const uniqueMonths = months.filter(m => {
+    if (seenMo.has(m.value)) return false;
+    seenMo.add(m.value);
+    return true;
+  });
+  const platforms      = [...new Set(rows.map(r => r.platform))].sort();
+  const campaign_types = [...new Set(rows.map(r => r.campaignType))].sort();
+  return { years, months: uniqueMonths, platforms, campaign_types };
+}
+
+function onData(data) {
+  const campaigns = data.campaigns || [];
+  allRows    = campaigns.map(parseRow);
+  filterOpts = buildFilterOpts(allRows);
+  populateFilters();
+  loadTargets();
+  applyFilters();
+  document.getElementById('loading').style.display   = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+function onError(err) {
+  document.getElementById('loading').style.display = 'none';
+  const errEl = document.getElementById('error-msg');
+  errEl.style.display = 'block';
+  errEl.textContent = 'Failed to load data: ' + err.message;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetch(`${WORKER}/data/${CLIENT_ID}/campaign-roi`)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(onData)
+    .catch(onError);
+});
+
+// ── Populate filter dropdowns ─────────────────────────────────────────────────
+function populateFilters() {
+  const yr  = document.getElementById('f-year');
+  const mo  = document.getElementById('f-month');
+  const plt = document.getElementById('f-platform');
+  const typ = document.getElementById('f-type');
+
+  (filterOpts.years || []).forEach(y => {
+    const o = document.createElement('option'); o.value = y; o.textContent = y; yr.appendChild(o);
+  });
+  (filterOpts.months || []).forEach(m => {
+    const o = document.createElement('option'); o.value = m.value; o.textContent = m.label; mo.appendChild(o);
+  });
+  (filterOpts.platforms || []).forEach(p => {
+    const o = document.createElement('option'); o.value = p; o.textContent = capFirst(p); plt.appendChild(o);
+  });
+  (filterOpts.campaign_types || []).forEach(t => {
+    const o = document.createElement('option'); o.value = t; o.textContent = capFirst(t); typ.appendChild(o);
+  });
+}
+
+// ── Filter & render ───────────────────────────────────────────────────────────
+function getFilteredRows() {
+  const yr  = document.getElementById('f-year').value;
+  const mo  = document.getElementById('f-month').value;
+  const plt = document.getElementById('f-platform').value;
+  const typ = document.getElementById('f-type').value;
+  return allRows.filter(r =>
+    (!yr  || r.yr === yr) &&
+    (!mo  || r.mo === mo) &&
+    (!plt || r.platform === plt) &&
+    (!typ || r.campaignType === typ)
+  );
+}
+
+function getPriorRows(filtered) {
+  // If a specific month is selected, compare to that same month minus 1
+  // Otherwise compare to all-except-last-month vs all-except-first-month approach
+  const yr  = document.getElementById('f-year').value;
+  const mo  = document.getElementById('f-month').value;
+  if (!mo) {
+    // Compare first half vs second half of filtered set by mKey
+    const keys = [...new Set(filtered.map(r => r.mKey))].sort();
+    if (keys.length < 2) return [];
+    const mid   = Math.floor(keys.length / 2);
+    const priorKeys = new Set(keys.slice(0, mid));
+    return filtered.filter(r => priorKeys.has(r.mKey));
+  }
+  // Find prior month
+  const moNum = parseInt(mo);
+  const priorMo = moNum === 1 ? '12' : String(moNum - 1).padStart(2,'0');
+  const priorYr = (moNum === 1 && yr) ? String(parseInt(yr) - 1) : yr;
+  return allRows.filter(r =>
+    r.mo === priorMo &&
+    (!priorYr || r.yr === priorYr)
+  );
+}
+
+function sumRows(rows) {
+  let spend = 0, revenue = 0, conversions = 0, paidSpend = 0, paidRevenue = 0;
+  rows.forEach(r => {
+    spend       += r.spend;
+    revenue     += r.revenue;
+    conversions += r.conversions;
+    if (r.spend > 0) { paidSpend += r.spend; paidRevenue += r.revenue; }
+  });
+  const roas = paidSpend > 0 ? paidRevenue / paidSpend : 0;
+  return { spend, revenue, conversions, roas };
+}
+
+function applyFilters() {
+  const filtered = getFilteredRows();
+  const prior    = getPriorRows(filtered);
+  const curr     = sumRows(filtered);
+  const prev     = sumRows(prior);
+
+  renderKPIs(curr, prev);
+  renderCharts(filtered);
+  renderTable(filtered);
+  renderGoals(filtered);
+}
+
+function resetFilters() {
+  ['f-year','f-month','f-platform','f-type'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  applyFilters();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+function renderKPIs(curr, prev) {
+  document.getElementById('kpi-spend').textContent   = fmtDollar(curr.spend);
+  document.getElementById('kpi-revenue').textContent = fmtDollar(curr.revenue);
+  document.getElementById('kpi-roas').textContent    = curr.roas > 0 ? fmtRoas(curr.roas) : 'N/A';
+  document.getElementById('kpi-conv').textContent    = fmtNum(curr.conversions);
+
+  renderDelta(document.getElementById('kpi-spend-delta'),   getDelta(curr.spend,       prev.spend),       true);
+  renderDelta(document.getElementById('kpi-revenue-delta'), getDelta(curr.revenue,     prev.revenue),     false);
+  renderDelta(document.getElementById('kpi-roas-delta'),    getDelta(curr.roas,        prev.roas),        false);
+  renderDelta(document.getElementById('kpi-conv-delta'),    getDelta(curr.conversions, prev.conversions), false);
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+function getChartColors() {
+  return {
+    primary:  cssVar('--primary'),
+    accent:   cssVar('--accent'),
+    good:     cssVar('--good'),
+    warn:     cssVar('--warn'),
+    muted:    cssVar('--muted'),
+    text:     cssVar('--text'),
+    border:   cssVar('--border'),
+    surface:  cssVar('--surface'),
+  };
+}
+
+function baseChartOpts(c) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0d1530',
+        borderColor: c.border,
+        borderWidth: 1,
+        titleColor: c.text,
+        bodyColor:  c.muted,
+        padding: 10,
+        cornerRadius: 8,
+      },
+    },
+  };
+}
+
+function renderCharts(rows) {
+  renderRevSpendChart(rows);
+  renderRoasPlatformChart(rows);
+  renderSpendDonutChart(rows);
+}
+
+function renderRevSpendChart(rows) {
+  const c = getChartColors();
+  // Aggregate by month
+  const byMonth = {};
+  rows.forEach(r => {
+    if (!byMonth[r.mKey]) byMonth[r.mKey] = { label: r.mLabel, revenue: 0, spend: 0 };
+    byMonth[r.mKey].revenue += r.revenue;
+    byMonth[r.mKey].spend   += r.spend;
+  });
+  const sorted = Object.entries(byMonth).sort((a,b) => a[0].localeCompare(b[0]));
+  const labels  = sorted.map(e => e[1].label);
+  const revenue = sorted.map(e => e[1].revenue);
+  const spend   = sorted.map(e => e[1].spend);
+
+  const ctx = document.getElementById('chart-rev-spend').getContext('2d');
+  if (chartRevSpend) chartRevSpend.destroy();
+  chartRevSpend = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Revenue',
+          data: revenue,
+          backgroundColor: c.primary + 'cc',
+          borderColor: c.primary,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: 'Spend',
+          data: spend,
+          backgroundColor: c.accent + '88',
+          borderColor: c.accent,
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      ...baseChartOpts(c),
+      plugins: {
+        ...baseChartOpts(c).plugins,
+        legend: {
+          display: true,
+          labels: { color: c.muted, font: { size: 11 }, boxWidth: 10, padding: 14 },
+        },
+        tooltip: {
+          ...baseChartOpts(c).plugins.tooltip,
+          callbacks: {
+            label: ctx => ' ' + ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString(),
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: c.muted, font: { size: 10 }, maxRotation: 45 },
+          grid:  { color: c.border },
+        },
+        y: {
+          ticks: { color: c.muted, font: { size: 10 }, callback: v => '$' + (v >= 1000 ? (v/1000)+'k' : v) },
+          grid:  { color: c.border },
+        },
+      },
+    },
+  });
+}
+
+function renderRoasPlatformChart(rows) {
+  const c = getChartColors();
+  // Paid only, group by platform
+  const byPlatform = {};
+  rows.filter(r => r.spend > 0).forEach(r => {
+    if (!byPlatform[r.platform]) byPlatform[r.platform] = { spend: 0, revenue: 0 };
+    byPlatform[r.platform].spend   += r.spend;
+    byPlatform[r.platform].revenue += r.revenue;
+  });
+  const entries = Object.entries(byPlatform)
+    .map(([p, v]) => ({ platform: p, roas: v.spend > 0 ? v.revenue / v.spend : 0 }))
+    .sort((a, b) => b.roas - a.roas);
+
+  const labels = entries.map(e => capFirst(e.platform));
+  const values = entries.map(e => parseFloat(e.roas.toFixed(2)));
+  const colors = entries.map(e => PLATFORM_COLORS[e.platform] || c.primary);
+
+  const ctx = document.getElementById('chart-roas-platform').getContext('2d');
+  if (chartRoasPlatform) chartRoasPlatform.destroy();
+  chartRoasPlatform = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'ROAS',
+        data: values,
+        backgroundColor: colors.map(cl => cl + 'cc'),
+        borderColor: colors,
+        borderWidth: 1,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      ...baseChartOpts(c),
+      indexAxis: 'y',
+      plugins: {
+        ...baseChartOpts(c).plugins,
+        tooltip: {
+          ...baseChartOpts(c).plugins.tooltip,
+          callbacks: {
+            label: ctx => ' ROAS: ' + ctx.parsed.x.toFixed(2) + 'x',
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: c.muted, font: { size: 10 }, callback: v => v + 'x' },
+          grid:  { color: c.border },
+        },
+        y: {
+          ticks: { color: c.muted, font: { size: 11 } },
+          grid:  { display: false },
+        },
+      },
+    },
+  });
+}
+
+function renderSpendDonutChart(rows) {
+  const c = getChartColors();
+  const byPlatform = {};
+  rows.filter(r => r.spend > 0).forEach(r => {
+    byPlatform[r.platform] = (byPlatform[r.platform] || 0) + r.spend;
+  });
+  const entries = Object.entries(byPlatform).sort((a,b) => b[1] - a[1]);
+  const labels  = entries.map(([p]) => capFirst(p));
+  const values  = entries.map(([,v]) => v);
+  const colors  = entries.map(([p]) => PLATFORM_COLORS[p] || c.primary);
+
+  const ctx = document.getElementById('chart-spend-donut').getContext('2d');
+  if (chartSpendDonut) chartSpendDonut.destroy();
+  chartSpendDonut = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.map(cl => cl + 'cc'),
+        borderColor: colors,
+        borderWidth: 2,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      ...baseChartOpts(c),
+      cutout: '62%',
+      plugins: {
+        ...baseChartOpts(c).plugins,
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { color: c.muted, font: { size: 10 }, boxWidth: 9, padding: 10 },
+        },
+        tooltip: {
+          ...baseChartOpts(c).plugins.tooltip,
+          callbacks: {
+            label: ctx => ' ' + ctx.label + ': $' + ctx.parsed.toLocaleString(),
+          },
+        },
+      },
+    },
+  });
+}
+
+function refreshChartColors() {
+  // Rebuild charts with updated CSS variables
+  if (allRows.length) {
+    const filtered = getFilteredRows();
+    renderCharts(filtered);
+  }
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+function aggregateByCampaign(rows) {
+  const map = {};
+  rows.forEach(r => {
+    const key = r.campaignName + '|' + r.platform + '|' + r.campaignType;
+    if (!map[key]) {
+      map[key] = {
+        campaignName: r.campaignName,
+        platform:     r.platform,
+        campaignType: r.campaignType,
+        impressions:  0, clicks: 0, spend: 0, conversions: 0, revenue: 0,
+      };
+    }
+    const g = map[key];
+    g.impressions  += r.impressions;
+    g.clicks       += r.clicks;
+    g.spend        += r.spend;
+    g.conversions  += r.conversions;
+    g.revenue      += r.revenue;
+  });
+  return Object.values(map).map(g => {
+    const roas = g.spend > 0 ? g.revenue / g.spend : null;
+    const ctr  = g.impressions > 0 ? (g.clicks / g.impressions) * 100 : 0;
+    const cpa  = g.spend > 0 && g.conversions > 0 ? g.spend / g.conversions : null;
+    const cvr  = g.clicks > 0 ? (g.conversions / g.clicks) * 100 : 0;
+    return { ...g, roas, ctr, cpa, cvr };
+  });
+}
+
+function sortTable(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = 'desc';
+  }
+  localStorage.setItem('roi-sort-col', sortCol);
+  localStorage.setItem('roi-sort-dir', sortDir);
+  renderTable(getFilteredRows());
+  updateSortHeaders();
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('thead th').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.innerHTML = '&#8597;';
+    if (th.dataset.col === sortCol) {
+      th.classList.add('sort-' + sortDir);
+      if (icon) icon.innerHTML = sortDir === 'asc' ? '&#8593;' : '&#8595;';
+    }
+  });
+}
+
+function renderTable(rows) {
+  const campaigns = aggregateByCampaign(rows);
+
+  // Sort
+  campaigns.sort((a, b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return sortDir === 'asc' ? av - bv : bv - av;
+  });
+
+  const tbody = document.getElementById('table-body');
+  const empty = document.getElementById('table-empty');
+
+  if (!campaigns.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = campaigns.map(g => {
+    const icon = PLATFORM_ICONS[g.platform] || '📊';
+    const typeCls  = g.campaignType === 'paid' ? 'type-paid' : 'type-organic';
+    const typeLabel = capFirst(g.campaignType);
+
+    const roasHtml = g.roas === null
+      ? '<span class="roas-na">N/A</span>'
+      : `<span class="${g.roas >= 3 ? 'roas-good' : g.roas >= 1 ? 'roas-warn' : 'roas-bad'}">${fmtRoas(g.roas)}</span>`;
+
+    const spendHtml = g.spend > 0 ? fmtDollarFull(g.spend) : '<span class="roas-na">$0</span>';
+    const cpaHtml   = g.cpa  === null ? '<span class="roas-na">N/A</span>' : fmtDollarFull(g.cpa);
+
+    return `<tr>
+      <td><span class="platform-icon-sm">${icon}</span>${g.campaignName}</td>
+      <td class="td-muted">${capFirst(g.platform)}</td>
+      <td><span class="type-badge ${typeCls}">${typeLabel}</span></td>
+      <td class="td-right">${spendHtml}</td>
+      <td class="td-right">${fmtDollarFull(g.revenue)}</td>
+      <td class="td-right">${roasHtml}</td>
+      <td class="td-right">${fmtNum(g.conversions)}</td>
+      <td class="td-right">${cpaHtml}</td>
+      <td class="td-right">${fmtPct(g.ctr)}</td>
+    </tr>`;
+  }).join('');
+
+  updateSortHeaders();
+}
+
+// ── Goals ─────────────────────────────────────────────────────────────────────
+function loadTargets() {
+  const saved = localStorage.getItem('roi-targets');
+  if (saved) {
+    try {
+      const t = JSON.parse(saved);
+      if (t.spend) document.getElementById('g-spend-target').value = t.spend;
+      if (t.rev)   document.getElementById('g-rev-target').value   = t.rev;
+      if (t.roas)  document.getElementById('g-roas-target').value  = t.roas;
+    } catch(e) {}
+  }
+}
+
+function saveTargets() {
+  localStorage.setItem('roi-targets', JSON.stringify({
+    spend: document.getElementById('g-spend-target').value,
+    rev:   document.getElementById('g-rev-target').value,
+    roas:  document.getElementById('g-roas-target').value,
+  }));
+}
+
+function toggleGoals() {
+  const body  = document.getElementById('goals-body');
+  const arrow = document.getElementById('goals-arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+function renderGoals(rows) {
+  if (!rows) rows = getFilteredRows();
+  const curr = sumRows(rows);
+
+  const spendTarget = parseFloat(document.getElementById('g-spend-target').value) || 1500;
+  const revTarget   = parseFloat(document.getElementById('g-rev-target').value)   || 8000;
+  const roasTarget  = parseFloat(document.getElementById('g-roas-target').value)  || 3.0;
+
+  // Spend (lower is better - on budget)
+  const spendPct = spendTarget > 0 ? Math.min((curr.spend / spendTarget) * 100, 100) : 0;
+  document.getElementById('goal-spend-actual').textContent = fmtDollarFull(curr.spend);
+  document.getElementById('goal-spend-tgt').textContent    = 'of ' + fmtDollarFull(spendTarget);
+  const spendBar = document.getElementById('goal-spend-bar');
+  spendBar.style.width = spendPct + '%';
+  spendBar.className   = 'bar-fill' + (curr.spend > spendTarget ? ' over' : '');
+  setPaceBadge('goal-spend-badge', curr.spend / spendTarget, true);
+
+  // Revenue
+  const revPct = revTarget > 0 ? Math.min((curr.revenue / revTarget) * 100, 100) : 0;
+  document.getElementById('goal-rev-actual').textContent = fmtDollarFull(curr.revenue);
+  document.getElementById('goal-rev-tgt').textContent    = 'of ' + fmtDollarFull(revTarget);
+  const revBar = document.getElementById('goal-rev-bar');
+  revBar.style.width = revPct + '%';
+  revBar.className   = 'bar-fill' + (curr.revenue >= revTarget ? ' over' : '');
+  setPaceBadge('goal-rev-badge', curr.revenue / revTarget, false);
+
+  // ROAS
+  const roasPct = roasTarget > 0 && curr.roas > 0 ? Math.min((curr.roas / roasTarget) * 100, 100) : 0;
+  document.getElementById('goal-roas-actual').textContent = curr.roas > 0 ? fmtRoas(curr.roas) : 'N/A';
+  document.getElementById('goal-roas-tgt').textContent    = 'target ' + roasTarget.toFixed(1) + 'x';
+  const roasBar = document.getElementById('goal-roas-bar');
+  roasBar.style.width = roasPct + '%';
+  roasBar.className   = 'bar-fill' + (curr.roas >= roasTarget ? ' over' : '');
+  setPaceBadge('goal-roas-badge', curr.roas > 0 ? curr.roas / roasTarget : 0, false);
+}
+
+function setPaceBadge(id, ratio, lowerIsBetter) {
+  const el = document.getElementById(id);
+  el.className = 'pace-badge';
+  if (!ratio || isNaN(ratio)) { el.textContent = '--'; el.className += ' pace-flat'; return; }
+  if (lowerIsBetter) {
+    // Spend: under budget is good
+    if (ratio <= 0.85)      { el.className += ' pace-ahead';    el.textContent = 'Under Budget'; }
+    else if (ratio <= 1.0)  { el.className += ' pace-on-track'; el.textContent = 'On Budget'; }
+    else if (ratio <= 1.15) { el.className += ' pace-watch';    el.textContent = 'Over Budget'; }
+    else                    { el.className += ' pace-behind';   el.textContent = 'Over Budget'; }
+  } else {
+    if (ratio >= 1.1)      { el.className += ' pace-ahead';    el.textContent = 'Ahead of Goal'; }
+    else if (ratio >= 0.9) { el.className += ' pace-on-track'; el.textContent = 'On Track'; }
+    else if (ratio >= 0.7) { el.className += ' pace-watch';    el.textContent = 'Watch'; }
+    else                   { el.className += ' pace-behind';   el.textContent = 'Behind'; }
+  }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+// Data is loaded via the DOMContentLoaded listener in the fetch block above.
+</script>
+</body>
+</html>
