@@ -614,13 +614,15 @@ const PLATFORM_ICONS = {
   email:     '✉️',
 };
 
-const PLATFORM_COLORS = {
-  instagram: '#e1306c',
-  tiktok:    '#69c9d0',
-  google:    '#4285f4',
-  pinterest: '#e60023',
-  email:     '#10b981',
-};
+function getPlatformColors(c) {
+  return {
+    instagram: c.primary,
+    tiktok:    c.accent,
+    google:    c.good,
+    pinterest: c.warn,
+    email:     cssVar('--primary2'),
+  };
+}
 
 // ── Theme & Scheme ────────────────────────────────────────────────────────────
 let theme  = localStorage.getItem('roi-theme')  || 'dark';
@@ -1000,7 +1002,8 @@ function renderRoasPlatformChart(rows) {
 
   const labels = entries.map(e => capFirst(e.platform));
   const values = entries.map(e => parseFloat(e.roas.toFixed(2)));
-  const colors = entries.map(e => PLATFORM_COLORS[e.platform] || c.primary);
+  const platformColors = getPlatformColors(c);
+  const colors = entries.map(e => platformColors[e.platform] || c.primary);
 
   const ctx = document.getElementById('chart-roas-platform').getContext('2d');
   if (chartRoasPlatform) chartRoasPlatform.destroy();
@@ -1052,7 +1055,8 @@ function renderSpendDonutChart(rows) {
   const entries = Object.entries(byPlatform).sort((a,b) => b[1] - a[1]);
   const labels  = entries.map(([p]) => capFirst(p));
   const values  = entries.map(([,v]) => v);
-  const colors  = entries.map(([p]) => PLATFORM_COLORS[p] || c.primary);
+  const platformColors = getPlatformColors(c);
+  const colors  = entries.map(([p]) => platformColors[p] || c.primary);
 
   const ctx = document.getElementById('chart-spend-donut').getContext('2d');
   if (chartSpendDonut) chartSpendDonut.destroy();
