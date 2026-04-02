@@ -195,6 +195,81 @@
     }
     .kpi-card.highlight::before { opacity:1; }
     .kpi-label { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .info-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 0 0 0 4px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity .15s, color .15s;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+    .info-btn:hover { opacity: 1; color: var(--primary); }
+    .kpi-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .kpi-modal-overlay.open { display: flex; }
+    .kpi-modal {
+      background: #111827;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-width: 420px;
+      width: calc(100% - 40px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      position: relative;
+    }
+    [data-theme="light"] .kpi-modal {
+      background: #ffffff;
+      border-color: rgba(0,0,0,.12);
+      box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    }
+    .kpi-modal-close {
+      position: absolute;
+      top: 12px; right: 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+    .kpi-modal-close:hover { color: var(--text); }
+    .kpi-modal-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 14px;
+      padding-right: 24px;
+    }
+    .kpi-modal-section { margin-bottom: 12px; }
+    .kpi-modal-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .kpi-modal-section-body {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.55;
+    }
+    [data-theme="light"] .kpi-modal { color: #1a2142; }
+    [data-theme="light"] .kpi-modal-section-body { color: #1a2142; }
     .kpi-value { font-size:24px; font-weight:800; color:var(--primary); line-height:1; }
     .kpi-delta { font-size:11px; color:var(--muted); margin-top:5px; display:flex; align-items:center; gap:4px; }
     .delta-up   { color:var(--good); }
@@ -397,22 +472,22 @@
     <div class="section-label">Performance Summary</div>
     <div class="kpi-row" style="margin-bottom:14px">
       <div class="kpi-card highlight">
-        <div class="kpi-label">Total Ad Spend</div>
+        <div class="kpi-label">Total Ad Spend <button class="info-btn" onclick="showKpiInfo('spend')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-spend">-</div>
         <div class="kpi-delta" id="kpi-spend-delta"></div>
       </div>
       <div class="kpi-card highlight">
-        <div class="kpi-label">Attributed Revenue</div>
+        <div class="kpi-label">Attributed Revenue <button class="info-btn" onclick="showKpiInfo('revenue')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-revenue">-</div>
         <div class="kpi-delta" id="kpi-revenue-delta"></div>
       </div>
       <div class="kpi-card highlight">
-        <div class="kpi-label">Overall ROAS (Paid)</div>
+        <div class="kpi-label">Overall ROAS (Paid) <button class="info-btn" onclick="showKpiInfo('roas')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-roas">-</div>
         <div class="kpi-delta" id="kpi-roas-delta"></div>
       </div>
       <div class="kpi-card highlight">
-        <div class="kpi-label">Total Conversions</div>
+        <div class="kpi-label">Total Conversions <button class="info-btn" onclick="showKpiInfo('conversions')">ⓘ</button></div>
         <div class="kpi-value" id="kpi-conv">-</div>
         <div class="kpi-delta" id="kpi-conv-delta"></div>
       </div>
@@ -1212,5 +1287,41 @@ function setPaceBadge(id, ratio, lowerIsBetter) {
 // ── Boot ──────────────────────────────────────────────────────────────────────
 // Data is loaded via the DOMContentLoaded listener in the fetch block above.
 </script>
+
+    <div class="kpi-modal-overlay" id="kpiModal" onclick="hideKpiInfo()">
+      <div class="kpi-modal" onclick="event.stopPropagation()">
+        <button class="kpi-modal-close" onclick="hideKpiInfo()">×</button>
+        <div class="kpi-modal-title" id="kpiModalTitle"></div>
+        <div id="kpiModalBody"></div>
+      </div>
+    </div>
+
+    <script>
+    const KPI_INFO = {
+      'spend':       { title: 'Total Ad Spend',          def: 'The total amount spent on paid campaigns across all platforms in the selected period. This includes any paid Instagram, TikTok, Google, or Pinterest ad campaigns.',                                                                                                         benchmark: 'Healthy ecommerce brands typically spend 10-20% of revenue on paid acquisition. Spending below 10% may limit growth. Spending above 20% compresses margins unless ROAS is very strong.',                                                                                                           action: 'Track ad spend as a percentage of revenue, not as an absolute number. As revenue scales, you should be able to maintain or improve ROAS — if spend grows faster than revenue, audit your worst-performing campaigns first.' },
+      'revenue':     { title: 'Attributed Revenue',      def: 'Revenue directly attributed to paid campaigns — purchases that can be traced back to an ad click or impression. This is the numerator in your ROAS calculation.',                                                                                                           benchmark: 'At minimum, attributed revenue should exceed ad spend (ROAS > 1.0) just to break even on ad costs alone — before COGS and other expenses. A truly profitable threshold for most boutiques is ROAS 2.5-3x or higher.',                                                                              action: 'If attributed revenue is close to or below ad spend, pause underperforming campaigns immediately and focus budget on your highest-ROAS campaigns. Then test new creatives to improve click-to-purchase rates.' },
+      'roas':        { title: 'Overall ROAS (Paid)',      def: 'Return on Ad Spend — attributed revenue divided by ad spend. A ROAS of 3.0 means you earned $3 in revenue for every $1 spent on ads. This is the headline efficiency metric for paid campaigns.',                                                                         benchmark: 'Break-even is roughly ROAS 2.0-2.5 when you account for COGS (typically 40-50% for fashion). ROAS 3x+ is profitable for most boutiques. ROAS 4-6x is strong. Under 2x means ads are likely losing money after product costs.',                                                                    action: 'If ROAS is below 2.5x, do not just increase budget — first fix the creative or audience targeting. Scaling a low-ROAS campaign only loses money faster. Test 2-3 new ad variations before scaling any campaign.' },
+      'conversions': { title: 'Total Conversions',       def: 'The number of purchases directly attributed to paid campaigns. This is the raw count of ad-driven sales, separate from organic sales.',                                                                                                                                     benchmark: 'Conversion count scales with spend and audience size. More useful to track: conversion rate from ad clicks (should be 1-3% for paid social, 2-4% for paid search). Low conversions with high click volume = landing page issue.',                                                                  action: 'To improve paid conversion count without increasing spend: optimize your landing pages for mobile, reduce checkout steps, add social proof near the buy button, and make sure your ad creative matches what customers find when they click.' },
+    };
+
+    function showKpiInfo(key) {
+      const d = KPI_INFO[key];
+      if (!d) return;
+      document.getElementById('kpiModalTitle').textContent = d.title;
+      document.getElementById('kpiModalBody').innerHTML =
+        '<div class="kpi-modal-section"><div class="kpi-modal-section-label">What it is</div><div class="kpi-modal-section-body">' + d.def + '</div></div>' +
+        '<div class="kpi-modal-section"><div class="kpi-modal-section-label">Industry benchmark</div><div class="kpi-modal-section-body">' + d.benchmark + '</div></div>' +
+        '<div class="kpi-modal-section"><div class="kpi-modal-section-label">What to do</div><div class="kpi-modal-section-body">' + d.action + '</div></div>';
+      document.getElementById('kpiModal').classList.add('open');
+    }
+
+    function hideKpiInfo() {
+      document.getElementById('kpiModal').classList.remove('open');
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') hideKpiInfo();
+    });
+    </script>
 </body>
 </html>
