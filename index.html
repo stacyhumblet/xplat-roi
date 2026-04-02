@@ -666,15 +666,17 @@ window.addEventListener('message', e => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtDollar(n) {
+  if (!isFinite(n) || isNaN(n)) return '—';
   if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'k';
   return '$' + n.toFixed(0);
 }
 function fmtDollarFull(n) {
+  if (!isFinite(n) || isNaN(n)) return '—';
   return '$' + n.toLocaleString('en-US', { minimumFractionDigits:0, maximumFractionDigits:0 });
 }
-function fmtPct(n) { return n.toFixed(1) + '%'; }
-function fmtRoas(n) { return n.toFixed(1) + 'x'; }
-function fmtNum(n)  { return n.toLocaleString('en-US'); }
+function fmtPct(n)  { if (!isFinite(n) || isNaN(n)) return '—'; return n.toFixed(1) + '%'; }
+function fmtRoas(n) { if (!isFinite(n) || isNaN(n)) return '—'; return n.toFixed(1) + 'x'; }
+function fmtNum(n)  { if (!isFinite(n) || isNaN(n)) return '—'; return n.toLocaleString('en-US'); }
 function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 function cssVar(name) {
